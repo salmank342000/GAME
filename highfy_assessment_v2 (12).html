@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Highfy — MT Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --purple: #6B21A8;
+  --purple-dark: #5B21B6;
+  --orange: #F97316;
+  --orange-dim: rgba(249,115,22,0.15);
+  --purple-light: #7E3BB5;
+  --purple-dim: rgba(107,33,168,0.12);
+  --dark: #ffffff;
+  --surface: #f5f5f5;
+  --surface2: #ebebeb;
+  --surface3: #e0e0e0;
+  --border: rgba(0,0,0,0.1);
+  --text: #1a1a1a;
+  --muted: #666;
+  --success: #00c97a;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--dark);color:var(--text);
+  font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden;
+}
+h1,h2,h3,h4{font-family:'Poppins',sans-serif;}
+
+/* grain overlay */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.015;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.screen{display:none;min-height:100vh;position:relative;z-index:1;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ── LANDING ── */
+#screen-landing{
+  align-items:center;justify-content:center;padding:40px 20px;
+  background:radial-gradient(ellipse 90% 60% at 50% -10%,rgba(107,33,168,0.2) 0%,transparent 65%);
+}
+.landing-wrap{max-width:540px;width:100%;}
+.brand-row{display:flex;align-items:center;gap:12px;margin-bottom:40px;}
+.brand-logo{font-family:'Poppins',sans-serif;font-weight:800;font-size:28px;letter-spacing:-0.01em;}
+.brand-logo span{color:var(--purple);}
+.brand-tag{background:var(--purple-dim);border:1px solid rgba(107,33,168,0.25);padding:4px 12px;border-radius:100px;font-size:11px;color:var(--purple);font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
+.landing-wrap h1{font-size:clamp(38px,6vw,58px);font-weight:800;line-height:1.02;margin-bottom:14px;letter-spacing:-0.01em;}
+.landing-wrap h1 em{color:var(--purple);font-style:normal;}
+.landing-wrap>p{color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:28px;}
+.meta-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:36px;}
+.chip{background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:100px;font-size:12px;color:var(--muted);}
+.chip b{color:var(--text);font-weight:500;}
+
+/* form */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:30px;}
+.form-card h2{font-size:18px;font-weight:700;margin-bottom:22px;}
+.frow{display:grid;gap:12px;margin-bottom:12px;}
+.frow.two{grid-template-columns:1fr 1fr;}
+.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;letter-spacing:.05em;text-transform:uppercase;}
+.field input,.field select{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:11px 13px;border-radius:10px;font-size:14px;
+  font-family:'Nunito',sans-serif;outline:none;transition:border .2s;
+}
+.field input:focus,.field select:focus{border-color:var(--purple);}
+.field select option{background:var(--surface2);}
+
+
+
+
+
+
+.err{color:var(--danger);font-size:11px;margin-top:4px;display:none;}
+.btn-main{
+  width:100%;background:var(--purple);color:#fff;border:none;padding:14px;
+  border-radius:12px;font-size:15px;font-weight:700;font-family:'Poppins',sans-serif;
+  cursor:pointer;margin-top:18px;transition:all .2s;letter-spacing:.02em;
+}
+.btn-main:hover{background:var(--purple-light);transform:translateY(-1px);}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.admin-link{text-align:center;margin-top:16px;font-size:12px;color:var(--muted);}
+.admin-link a{color:var(--purple);cursor:pointer;}
+
+/* ── BLOCKED ── */
+#screen-blocked{
+  align-items:center;justify-content:center;padding:40px 20px;
+  background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(239,68,68,0.12) 0%,transparent 65%);
+}
+.blocked-card{max-width:420px;background:var(--surface);border:1px solid rgba(239,68,68,0.25);border-radius:20px;padding:48px 36px;text-align:center;}
+.blocked-icon{font-size:52px;margin-bottom:18px;}
+.blocked-card h2{font-size:24px;color:var(--danger);margin-bottom:10px;}
+.blocked-card p{color:var(--muted);font-size:14px;line-height:1.7;}
+
+/* ── INTRO ── */
+#screen-intro{
+  align-items:center;justify-content:center;padding:40px 20px;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(107,33,168,0.15) 0%,transparent 60%);
+  text-align:center;
+}
+.intro-inner{max-width:600px;}
+.intro-inner h1{font-size:clamp(28px,5vw,44px);font-weight:800;margin-bottom:12px;}
+.intro-inner>p{color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:28px;}
+.game-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:32px;}
+.game-thumb{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 8px;text-align:center;}
+.game-thumb .ico{font-size:22px;margin-bottom:5px;}
+.game-thumb .nm{font-size:10px;font-weight:600;color:var(--text);}
+.game-thumb .tm{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* ── GAME SCREEN ── */
+#screen-game{padding:0;background:var(--dark);}
+.game-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:10;
+}
+.topbar-logo{font-family:'Poppins',sans-serif;font-weight:800;font-size:17px;}
+.topbar-logo span{color:var(--purple);}
+.topbar-prog{flex:1;max-width:280px;margin:0 16px;}
+.prog-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px;}
+.prog-bar{height:3px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--purple);transition:width .5s ease;}
+.timer-pill{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:5px 13px;border-radius:100px;font-size:13px;font-weight:700;
+  min-width:52px;text-align:center;transition:color .3s,border-color .3s;
+}
+.timer-pill.hot{color:var(--danger);border-color:rgba(239,68,68,0.35);animation:throb 1s infinite;}
+@keyframes throb{0%,100%{opacity:1}50%{opacity:.55}}
+
+.game-body{padding:28px 24px;max-width:760px;margin:0 auto;min-height:calc(100vh - 56px);display:flex;flex-direction:column;}
+.dept-tag{font-size:10px;color:var(--purple);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-bottom:5px;}
+.game-body h2{font-size:clamp(20px,4vw,30px);font-weight:800;margin-bottom:6px;}
+.game-body .game-desc{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:24px;}
+.game-area{flex:1;display:flex;flex-direction:column;}
+
+/* shared game components */
+.fade-in{animation:fi .35s ease;}
+
+/* TUTORIAL OVERLAY */
+.tutorial-overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.tutorial-card {
+  background:#fff;border-radius:20px;padding:36px;max-width:480px;width:100%;text-align:center;
+}
+.tutorial-card .t-icon {font-size:52px;margin-bottom:16px;}
+.tutorial-card h2 {font-family:'Poppins',sans-serif;font-size:22px;font-weight:800;color:#1a1a1a;margin-bottom:10px;}
+.tutorial-card p {font-size:14px;color:#555;line-height:1.7;margin-bottom:20px;}
+.tutorial-card .t-tip {background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#6B21A8;margin-bottom:20px;font-weight:500;}
+.tutorial-timer {font-size:13px;color:#999;margin-bottom:16px;}
+.tutorial-timer span {font-weight:700;color:#6B21A8;}
+.btn-start-game {background:#6B21A8;color:#fff;border:none;padding:13px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* MEMORY */
+.m-round{text-align:center;margin-bottom:16px;}
+.m-round span{background:var(--surface2);padding:3px 14px;border-radius:100px;font-size:11px;color:var(--muted);}
+.m-grid{display:grid;gap:6px;margin:0 auto;width:fit-content;}
+.m-cell{
+  width:58px;height:58px;border-radius:9px;cursor:pointer;
+  background:var(--surface2);border:1.5px solid var(--border);transition:all .12s;user-select:none;
+}
+.m-cell.lit{background:var(--purple);border-color:var(--purple);box-shadow:0 0 18px rgba(107,33,168,.45);}
+.m-cell.sel{background:rgba(107,33,168,.4);border-color:var(--purple);}
+.m-cell.ok{background:var(--success);border-color:var(--success);}
+.m-cell.no{background:var(--danger);border-color:var(--danger);}
+.m-cell.locked{cursor:default;}
+.m-status{text-align:center;margin-top:14px;font-size:14px;color:var(--muted);min-height:22px;}
+
+/* MATH */
+.math-scoreboard{display:flex;gap:10px;margin-bottom:18px;}
+.math-sc{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
+.math-sc .v{font-size:26px;font-weight:800;font-family:'Poppins',sans-serif;}
+.math-sc .l{font-size:10px;color:var(--muted);margin-top:1px;}
+.eq-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px;text-align:center;margin-bottom:20px;}
+.eq-box .eq{font-size:clamp(32px,6vw,58px);font-family:'Poppins',sans-serif;font-weight:800;}
+.math-row{display:flex;gap:8px;}
+.math-inp{
+  flex:1;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);
+  padding:14px;border-radius:12px;font-size:22px;font-family:'Poppins',sans-serif;
+  font-weight:700;outline:none;text-align:center;transition:border .2s;
+}
+.math-inp:focus{border-color:var(--purple);}
+.btn-go{
+  background:var(--purple);color:#fff;border:none;padding:14px 24px;
+  border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;
+}
+
+/* PATTERN */
+.pat-qn{text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px;}
+.pat-seq{display:flex;gap:10px;justify-content:center;margin-bottom:28px;flex-wrap:wrap;}
+.pat-num{
+  width:56px;height:56px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-family:'Poppins',sans-serif;font-weight:800;
+}
+.pat-num.q{color:var(--purple);border-color:rgba(107,33,168,.4);background:var(--purple-dim);}
+.pat-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.pat-opt{
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;
+  padding:16px;text-align:center;font-size:20px;font-family:'Poppins',sans-serif;
+  font-weight:800;cursor:pointer;transition:all .12s;
+}
+.pat-opt:hover{border-color:var(--purple);background:var(--purple-dim);}
+.pat-opt.ok{background:rgba(0,201,122,.15);border-color:var(--success);color:var(--success);}
+.pat-opt.no{background:rgba(239,68,68,.12);border-color:var(--danger);color:var(--danger);}
+
+/* STROOP */
+.stroop-stats{display:flex;justify-content:center;gap:28px;margin-bottom:14px;}
+.s-stat .v{font-size:26px;font-weight:800;font-family:'Poppins',sans-serif;text-align:center;}
+.s-stat .l{font-size:10px;color:var(--muted);text-align:center;}
+.s-prog{height:5px;background:var(--surface2);border-radius:3px;margin-bottom:20px;overflow:hidden;}
+.s-fill{height:100%;background:var(--purple);transition:width .25s;}
+.stroop-word{font-size:clamp(48px,8vw,72px);font-family:'Poppins',sans-serif;font-weight:800;text-align:center;margin:16px 0 8px;}
+.stroop-q{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px;}
+.stroop-instr{font-size:12px;color:var(--muted);text-align:center;margin-bottom:4px;}
+.stroop-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.s-btn{
+  padding:16px;border-radius:12px;border:1.5px solid var(--border);cursor:pointer;
+  font-size:15px;font-weight:700;font-family:'Poppins',sans-serif;transition:all .12s;
+  background:var(--surface2);color:var(--text);
+}
+.s-btn:hover{transform:scale(1.02);}
+.s-btn.ok{background:rgba(0,201,122,.15);border-color:var(--success);}
+.s-btn.no{background:rgba(239,68,68,.12);border-color:var(--danger);}
+
+/* WAR ROOM */
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;}
+.bars{display:flex;align-items:flex-end;gap:6px;height:100px;min-height:100px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100px;justify-content:flex-end;}
+.bar-el{width:100%;border-radius:4px 4px 0 0;min-height:4px;}
+.bar-lbl{font-size:9px;color:var(--muted);}
+.war-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.wm{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;}
+.wm .wl{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.wm .wv{font-size:20px;font-weight:800;font-family:'Poppins',sans-serif;}
+.wm .wc{font-size:10px;margin-top:2px;}
+.wc.dn{color:var(--danger);}
+.wc.up{color:var(--success);}
+.war-q{background:var(--purple-dim);border:1px solid rgba(107,33,168,.2);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;}
+.war-opts{display:grid;gap:7px;}
+.war-opt{
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;
+  padding:12px 16px;cursor:pointer;font-size:13px;transition:all .12s;text-align:left;
+}
+.war-opt:hover{border-color:var(--purple);background:var(--purple-dim);}
+.war-opt.ok{border-color:var(--success);background:rgba(0,201,122,.1);}
+.war-opt.no{border-color:var(--danger);background:rgba(239,68,68,.1);}
+
+/* INBOX */
+.inbox-instr{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.inbox-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.inbox-item{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:11px;
+  padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:grab;
+  transition:all .12s;user-select:none;
+}
+.inbox-item:active{cursor:grabbing;opacity:.75;}
+.inbox-item.dragging{opacity:.45;}
+.inbox-item.over{border-color:var(--purple);background:var(--purple-dim);}
+.inbox-rank{
+  width:26px;height:26px;border-radius:7px;background:var(--purple);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;font-family:'Poppins',sans-serif;flex-shrink:0;
+}
+.inbox-ico{font-size:18px;flex-shrink:0;}
+.inbox-txt{flex:1;}
+.inbox-txt .from{font-size:10px;color:var(--muted);}
+.inbox-txt .subj{font-size:13px;font-weight:500;}
+.inbox-txt .prev{font-size:10px;color:var(--muted);}
+.urg{font-size:9px;padding:3px 8px;border-radius:100px;font-weight:700;flex-shrink:0;}
+.urg-critical{background:rgba(239,68,68,.15);color:var(--danger);}
+.urg-high{background:rgba(245,158,11,.15);color:var(--warning);}
+.urg-medium{background:rgba(107,33,168,.15);color:var(--purple);}
+.urg-low{background:var(--surface2);color:var(--muted);}
+.btn-confirm{background:var(--purple);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+
+/* DEAL */
+.deal-ctr{text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px;}
+.deal-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;}
+.deal-card h3{font-size:12px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;}
+.deal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.deal-m{background:var(--surface2);border-radius:9px;padding:12px;}
+.deal-m .dl{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.deal-m .dv{font-size:18px;font-weight:800;font-family:'Poppins',sans-serif;}
+.deal-m .ds{font-size:9px;color:var(--muted);margin-top:1px;}
+.deal-acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.deal-btn{
+  padding:14px 10px;border-radius:11px;border:1.5px solid var(--border);
+  cursor:pointer;font-size:13px;font-weight:700;font-family:'Poppins',sans-serif;
+  transition:all .18s;background:var(--surface2);color:var(--text);text-align:center;
+}
+.deal-btn:hover{transform:translateY(-2px);}
+.deal-btn.accept:hover{background:rgba(0,201,122,.15);border-color:var(--success);color:var(--success);}
+.deal-btn.negotiate:hover{background:rgba(245,158,11,.15);border-color:var(--warning);color:var(--warning);}
+.deal-btn.reject:hover{background:rgba(239,68,68,.12);border-color:var(--danger);color:var(--danger);}
+.deal-btn.ok{background:rgba(0,201,122,.15);border-color:var(--success);color:var(--success);}
+.deal-btn.no{background:rgba(239,68,68,.12);border-color:var(--danger);color:var(--danger);}
+.deal-res{text-align:center;padding:13px;border-radius:10px;margin-top:12px;font-size:13px;display:none;}
+.deal-res.profit{background:rgba(0,201,122,.1);color:var(--success);}
+.deal-res.loss{background:rgba(239,68,68,.1);color:var(--danger);}
+
+/* DM DASH */
+.dm-meters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.dm-m{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;}
+.dm-m .dl{font-size:10px;color:var(--muted);margin-bottom:5px;display:flex;justify-content:space-between;}
+.dm-bar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.dm-fill{height:100%;border-radius:3px;transition:width .4s;}
+.dm-thread{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px;margin-bottom:14px;max-height:240px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:8px;
+}
+.dm-bub{display:flex;gap:7px;}
+.dm-bub.theirs{flex-direction:row;}
+.dm-bub.ours{flex-direction:row-reverse;}
+.dm-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--surface2);}
+.dm-txt{max-width:75%;padding:9px 13px;border-radius:13px;font-size:12px;line-height:1.5;}
+.dm-bub.theirs .dm-txt{background:var(--surface2);border:1px solid var(--border);border-top-left-radius:3px;}
+.dm-bub.ours .dm-txt{background:var(--purple);color:#fff;border-top-right-radius:3px;}
+.dm-opts{display:grid;gap:7px;}
+.dm-opt{
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;
+  padding:11px 14px;cursor:pointer;font-size:12px;transition:all .12s;line-height:1.4;
+}
+.dm-opt:hover{border-color:var(--purple);background:var(--purple-dim);}
+
+/* RESULTS */
+#screen-results{
+  align-items:center;justify-content:flex-start;padding:40px 20px;
+  background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(107,33,168,.12) 0%,transparent 60%);
+}
+.res-inner{max-width:620px;width:100%;margin:0 auto;}
+.res-inner h1{font-size:clamp(26px,5vw,40px);font-weight:800;margin-bottom:6px;}
+.res-inner>p{color:var(--muted);margin-bottom:28px;}
+.profile-card{
+  background:linear-gradient(135deg,var(--surface) 0%,rgba(107,33,168,.07) 100%);
+  border:1px solid rgba(107,33,168,.2);border-radius:20px;padding:26px;margin-bottom:20px;
+}
+.profile-card h2{font-size:20px;margin-bottom:3px;}
+.profile-role{font-size:12px;color:var(--purple);font-weight:500;margin-bottom:16px;}
+.profile-tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;}
+.profile-tag{background:var(--purple-dim);border:1px solid rgba(107,33,168,.25);padding:4px 11px;border-radius:100px;font-size:11px;color:var(--purple);font-weight:600;}
+.score-rows{display:grid;gap:9px;}
+.s-row{display:flex;align-items:center;gap:10px;}
+.s-row .sn{font-size:12px;color:var(--muted);width:170px;flex-shrink:0;}
+.s-row .sbw{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.s-row .sbf{height:100%;border-radius:4px;background:var(--purple);transition:width 1s ease;}
+.s-row .sp{font-size:12px;font-weight:700;width:34px;text-align:right;}
+.total-box{background:var(--surface2);border-radius:14px;padding:18px;text-align:center;margin-top:18px;}
+.total-box .tv{font-size:44px;font-weight:800;font-family:'Poppins',sans-serif;color:var(--purple);}
+.total-box .tl{font-size:12px;color:var(--muted);}
+.res-note{color:var(--muted);font-size:12px;text-align:center;margin-top:16px;}
+
+/* ADMIN */
+#screen-admin{padding:0;}
+.admin-top{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:14px 26px;display:flex;align-items:center;justify-content:space-between;
+}
+.admin-top h1{font-size:20px;font-weight:800;}
+.admin-top h1 span{color:var(--purple);}
+.btn-back{background:none;border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;}
+.btn-back:hover{border-color:var(--purple);color:var(--purple);}
+.admin-body{padding:26px;max-width:1200px;margin:0 auto;}
+.admin-login-wrap{max-width:360px;margin:80px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:32px;text-align:center;}
+.admin-login-wrap h2{font-size:20px;margin-bottom:6px;}
+.admin-login-wrap p{color:var(--muted);font-size:12px;margin-bottom:20px;}
+.admin-login-wrap input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:11px 14px;border-radius:9px;font-size:14px;font-family:'Nunito',sans-serif;
+  outline:none;margin-bottom:10px;text-align:center;letter-spacing:.1em;
+}
+.admin-login-wrap input:focus{border-color:var(--purple);}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.stat-box .sv{font-size:28px;font-weight:800;font-family:'Poppins',sans-serif;color:var(--purple);}
+.stat-box .sl{font-size:11px;color:var(--muted);margin-top:1px;}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.table-head{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.table-head h3{font-size:15px;font-weight:700;}
+.btn-export{background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:5px;}
+.btn-export:hover{background:var(--purple-light);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{padding:10px 14px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);font-weight:500;}
+tbody td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.03);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.015);}
+.badge{padding:2px 9px;border-radius:100px;font-size:10px;font-weight:700;}
+.badge-mt{background:rgba(107,33,168,.15);color:var(--purple);}
+.badge-intern{background:rgba(245,158,11,.15);color:var(--warning);}
+.score-hi{color:var(--success);font-weight:700;font-family:'Poppins',sans-serif;}
+.score-mid{color:var(--warning);font-weight:700;font-family:'Poppins',sans-serif;}
+.score-lo{color:var(--danger);font-weight:700;font-family:'Poppins',sans-serif;}
+.res-link{color:var(--purple);text-decoration:none;font-size:11px;}
+.res-link:hover{text-decoration:underline;}
+.no-res{color:var(--muted);font-size:11px;}
+.empty{text-align:center;padding:50px;color:var(--muted);}
+.loading{text-align:center;padding:30px;color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-wrap fade-in">
+    <div class="brand-row">
+      <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:22px;color:#6B21A8;">Highfy <span style="color:#6B21A8;">Future Talent</span> Program</div>
+    </div>
+      <div class="brand-tag" style="background:rgba(249,115,22,0.15);border-color:rgba(249,115,22,0.3);color:#F97316;">Careers</div>
+    </div>
+    <h1><span style="color:#F97316;">Your First Day<br>at Highfy HQ</span></h1>
+    <p>A 14-minute challenge across 8 departments. Show us how you think under pressure — no textbooks, no shortcuts, just you.</p>
+    <div class="meta-chips">
+      <div class="chip">⏱ <b>~14 minutes</b></div>
+      <div class="chip">🎮 <b>8 games</b></div>
+      <div class="chip">📊 <b>4 dimensions</b></div>
+      <div class="chip">🔒 <b>One attempt per ERP</b></div>
+    </div>
+    <div class="form-card">
+      <h2>Tell us about yourself</h2>
+      <div class="frow two">
+        <div class="field"><label>Full Name *</label><input type="text" id="inp-name" placeholder="e.g. Ayesha Khan"></div>
+        <div class="field">
+          <label>ERP *</label>
+          <input type="text" id="inp-erp" placeholder="e.g. 20211234" maxlength="15">
+          <div class="err" id="err-erp">Please enter a valid ERP number</div>
+        </div>
+      </div>
+      <div class="frow two">
+        <div class="field"><label>Email *</label><input type="email" id="inp-email" placeholder="you@email.com"></div>
+        <div class="field"><label>Phone *</label><input type="tel" id="inp-phone" placeholder="+92 3XX XXXXXXX"></div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label>Applying For *</label>
+          <select id="inp-program">
+            <option value="">— Select program —</option>
+            <option value="MT Program">MT Program (Final Year / Alumni)</option>
+            <option value="Summer Internship">Summer Internship (3rd Year Students)</option>
+          </select>
+        </div>
+      </div>
+      
+            <div class="frow">
+        <div class="field">
+          <label>GPA *</label>
+          <input type="number" id="inp-gpa" placeholder="e.g. 3.5" min="0" max="4" step="0.01">
+          <div class="err" id="err-gpa">Please enter a valid GPA between 0 and 4</div>
+        </div>
+      </div>
+      <button class="btn-main" id="btn-start" onclick="submitReg()">Begin Assessment →</button>
+    </div>
+    <div class="admin-link">Admin? <a onclick="showScreen('screen-admin')">Access dashboard</a></div>
+  </div>
+</div>
+
+<!-- BLOCKED -->
+<div id="screen-blocked" class="screen">
+  <div class="blocked-card fade-in">
+    <div class="blocked-icon">🚫</div>
+    <h2>Already Attempted</h2>
+    <p>This ERP has already been used to complete the assessment. Only one attempt is permitted per candidate.</p>
+    <p style="margin-top:10px;">If you believe this is an error, contact <span style="color:var(--purple)">careers@highfy.pk</span></p>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div id="screen-intro" class="screen">
+  <div class="intro-inner fade-in">
+    <h1>Welcome to Highfy HQ 👋</h1>
+    <p>You're about to move through 8 departments in ~14 minutes. Each challenge is timed. Think fast, trust your instincts.</p>
+    <div class="game-grid">
+      <div class="game-thumb"><div class="ico">🧠</div><div class="nm">Memory Matrix</div><div class="tm">90 secs</div></div>
+      <div class="game-thumb"><div class="ico">⚡</div><div class="nm">Inventory Blitz</div><div class="tm">75 secs</div></div>
+      <div class="game-thumb"><div class="ico">🔢</div><div class="nm">Pattern Recon</div><div class="tm">75 secs</div></div>
+      <div class="game-thumb"><div class="ico">🎨</div><div class="nm">Stroop Test</div><div class="tm">75 secs</div></div>
+      <div class="game-thumb"><div class="ico">📊</div><div class="nm">Sales War Room</div><div class="tm">25 secs</div></div>
+      <div class="game-thumb"><div class="ico">📥</div><div class="nm">Inbox Meltdown</div><div class="tm">60 secs</div></div>
+      <div class="game-thumb"><div class="ico">💰</div><div class="nm">Deal or No Deal</div><div class="tm">4 deals</div></div>
+      <div class="game-thumb"><div class="ico">💬</div><div class="nm">DM Dash</div><div class="tm">3 exchanges</div></div>
+    </div>
+    <button class="btn-main" style="max-width:260px;margin:0 auto;" onclick="startGames()">Let's go →</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="game-topbar">
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:22px;color:#6B21A8;">Highfy <span style="color:#6B21A8;">Future Talent</span> Program</div>
+    <div class="topbar-prog">
+      <div class="prog-meta"><span id="prog-label">Game 1 of 8</span><span id="prog-pct">0%</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+    <div class="timer-pill" id="timer-pill">—</div>
+  </div>
+  <div class="game-body">
+    <div class="dept-tag" id="g-dept"></div>
+    <h2 id="g-name"></h2>
+    <p class="game-desc" id="g-desc"></p>
+    <div class="game-area" id="game-area"></div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="res-inner fade-in">
+    <h1>Assessment Complete 🎉</h1>
+    <p>Here's your cognitive profile, <span id="res-name" style="color:var(--purple);font-weight:600"></span>.</p>
+    <div class="profile-card">
+      <h2 id="res-title"></h2>
+      <div class="profile-role" id="res-program"></div>
+      <div class="profile-tags" id="res-tags"></div>
+      <div class="score-rows" id="res-rows"></div>
+      <div class="total-box">
+        <div class="tv" id="res-total"></div>
+        <div class="tl">out of 800 total points</div>
+      </div>
+    </div>
+    <p class="res-note">Your results have been submitted to the Highfy team. We'll be in touch soon!</p>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="screen-admin" class="screen">
+  <div class="admin-top">
+    <h1 style="color:#6B21A8;">high<span style="color:#6B21A8;">fy</span><span style="color:#F97316;font-size:13px;"> 👑</span> — Admin</h1>
+    <button class="btn-back" onclick="showScreen('screen-landing')">← Back</button>
+  </div>
+  <div class="admin-body">
+    <div id="admin-login-view">
+      <div class="admin-login-wrap fade-in">
+        <h2>🔐 Admin Access</h2>
+        <p>Enter the admin password to view results.</p>
+        <input type="password" id="admin-pw" placeholder="Password" onkeydown="if(event.key==='Enter')checkAdmin()">
+        <div class="err" id="err-admin" style="display:block;text-align:center;margin-bottom:8px;"></div>
+        <button class="btn-main" onclick="checkAdmin()">Unlock Dashboard</button>
+      </div>
+    </div>
+    <div id="admin-dash-view" style="display:none;" class="fade-in">
+      <div class="stats-grid" id="admin-stats"></div>
+      <div class="table-card">
+        <div class="table-head">
+          <h3>Candidate Results</h3>
+          <button class="btn-export" onclick="exportExcel()">📥 Export to Excel</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Name</th><th>ERP</th><th>GPA</th><th>Email</th><th>Phone</th>
+                <th>Program</th><th>Total</th><th>Cognitive</th><th>Numeracy</th>
+                <th>Judgment</th><th>Situational</th><th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="admin-tbody"></tbody>
+          </table>
+          <div id="admin-loading" class="loading">Loading results...</div>
+          <div id="admin-empty" class="empty" style="display:none">No candidates have completed the assessment yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ SUPABASE ══
+const SUPABASE_URL = 'https://borqsxznbnbvszmmcewk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_SiZixS18YWEOiLif8yyVYw_MaSPvnmf';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ADMIN_PW = 'highfy2026';
+const TABLE = 'candidates';
+
+// ══ STATE ══
+let candidate = {};
+let scores = { memory:0, math:0, pattern:0, stroop:0, warroom:0, inbox:0, deal:0, dm:0 };
+let gameIndex = 0;
+let timerInterval = null;
+
+// ══ SCREENS ══
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ══ ERP FORMAT ══
+// ERP field - no special formatting needed
+
+// ══ GPA ══
+// No file upload needed
+
+// ══ REGISTRATION ══
+async function submitReg() {
+  const name = document.getElementById('inp-name').value.trim();
+  const erp = document.getElementById('inp-erp').value.trim();
+  const email = document.getElementById('inp-email').value.trim();
+  const phone = document.getElementById('inp-phone').value.trim();
+  const program = document.getElementById('inp-program').value;
+  const gpa = parseFloat(document.getElementById('inp-gpa').value);
+  if(!name||!erp||!email||!phone||!program) { alert('Please fill in all required fields.'); return; }
+  if(isNaN(gpa)||gpa<0||gpa>4) { document.getElementById('err-gpa').style.display='block'; return; }
+  document.getElementById('err-gpa').style.display='none';
+  if(!/^\d+$/.test(erp) && erp.length >= 3) { document.getElementById('err-erp').style.display='block'; return; }
+  document.getElementById('err-erp').style.display='none';
+
+  const btn = document.getElementById('btn-start');
+  btn.disabled = true; btn.textContent = 'Checking...';
+
+  try {
+    // Check duplicate ERP in Supabase
+    const { data, error } = await db.from(TABLE).select('id').eq('erp', erp).limit(1);
+    if(error) throw error;
+    if(data && data.length > 0) { showScreen('screen-blocked'); return; }
+    candidate = { name, erp, email, phone, program, gpa, date: new Date().toLocaleString() };
+    // Save placeholder immediately to block duplicate attempts
+    await db.from(TABLE).insert({
+      name: name, erp: erp, email: email, phone: phone, program: program, gpa: gpa,
+      total_score: 0, profile: 'In Progress', submitted_at: new Date().toISOString()
+    });
+    showScreen('screen-intro');
+  } catch(e) {
+    console.error(e);
+    alert('Connection error. Please check your internet and try again.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Begin Assessment →';
+  }
+}
+
+
+// ══ TUTORIALS ══
+const TUTORIALS = {
+  memory:  { icon:'🧠', title:'Memory Matrix', tip:"Look carefully at which cells light up — you'll need to click them from memory!", time:12 },
+  math:    { icon:'⚡', title:'Inventory Blitz', tip:"Type your answer and hit Enter or → as fast as you can. Every correct answer counts!", time:10 },
+  pattern: { icon:'🔢', title:'Pattern Recognition', tip:"Study the number sequence and find the rule. Pick the missing number before time runs out!", time:10 },
+  stroop:  { icon:'🎨', title:'Stroop Test', tip:"Ignore what the word SAYS — click the colour of the INK. Your brain will try to trick you!", time:12 },
+  warroom: { icon:'📊', title:'Sales War Room', tip:"Read the dashboard quickly and pick the best action. You only have 25 seconds — trust your instincts!", time:12 },
+  inbox:   { icon:'📥', title:'Inbox Meltdown', tip:"Drag the notifications into priority order — most urgent at the top. Think fast, the clock is ticking!", time:12 },
+  deal:    { icon:'💰', title:'Deal or No Deal', tip:"Review the numbers: cost, retail price, fees, and discount. Decide whether to accept, negotiate or reject each deal!", time:12 },
+  dm:      { icon:'💬', title:'DM Dash', tip:"Choose your responses carefully — each one affects the brand reputation and customer satisfaction meters!", time:12 },
+};
+
+function showTutorial(gameId, onStart) {
+  const t = TUTORIALS[gameId];
+  let countdown = t.time;
+  const overlay = document.createElement('div');
+  overlay.className = 'tutorial-overlay';
+  overlay.innerHTML = `
+    <div class="tutorial-card fade-in">
+      <div class="t-icon">${t.icon}</div>
+      <h2>${t.title}</h2>
+      <div class="t-tip">💡 ${t.tip}</div>
+      <div class="tutorial-timer">Starting in <span id="t-count">${countdown}</span> seconds</div>
+      <button class="btn-start-game" onclick="this.closest('.tutorial-overlay').remove();onStartGame();">I'm Ready →</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  window.onStartGame = onStart;
+  const interval = setInterval(()=>{
+    countdown--;
+    const el = document.getElementById('t-count');
+    if(el) el.textContent = countdown;
+    if(countdown <= 0) {
+      clearInterval(interval);
+      overlay.remove();
+      onStart();
+    }
+  }, 1000);
+}
+
+// ══ GAMES CONFIG ══
+const GAMES = [
+  { id:'memory',  dept:'Memory Department',       name:'Memory Matrix',    desc:'Memorise the highlighted cells, then reproduce the pattern. 3 rounds.',        timer:90   },
+  { id:'math',    dept:'Operations',              name:'Inventory Blitz',  desc:'Solve as many arithmetic problems as you can in 75 seconds.',                   timer:60   },
+  { id:'pattern', dept:'Analytics',               name:'Pattern Recognition', desc:'Find the missing number in each sequence. 3 questions.',                    timer:60   },
+  { id:'stroop',  dept:'Brand Team',              name:'Stroop Test',      desc:'Tap the INK COLOUR of the word — not what it says. 8 rounds.',                  timer:60   },
+  { id:'warroom', dept:'Sales War Room',           name:'Sales War Room',   desc:"You're the brand manager. The dashboard is flashing. Spot what's wrong — fast.", timer:25   },
+  { id:'inbox',   dept:'Operations',              name:'Inbox Meltdown',   desc:"It's 9am. 5 urgent notifications just landed. Drag them into priority order.",   timer:60   },
+  { id:'deal',    dept:'Buying & Merchandising',  name:'Deal or No Deal',  desc:'A supplier is pitching. Review the numbers and decide in 20 seconds each.',      timer:null },
+  { id:'dm',      dept:'Customer Experience',     name:'DM Dash',          desc:'An angry customer just messaged Highfy on Instagram. Handle it.',                timer:90   },
+];
+
+function startGames() { gameIndex=0; showScreen('screen-game'); launchGame(); }
+
+function updateProgress() {
+  const pct = Math.round((gameIndex/GAMES.length)*100);
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-label').textContent = `Game ${gameIndex+1} of ${GAMES.length}`;
+  document.getElementById('prog-pct').textContent = pct+'%';
+}
+
+function launchGame() {
+  if(gameIndex >= GAMES.length) { finishAssessment(); return; }
+  const g = GAMES[gameIndex];
+  document.getElementById('g-dept').textContent = g.dept;
+  document.getElementById('g-name').textContent = g.name;
+  document.getElementById('g-desc').textContent = g.desc;
+  updateProgress();
+  clearInterval(timerInterval);
+  document.getElementById('timer-pill').className = 'timer-pill';
+  document.getElementById('timer-pill').textContent = g.timer ? g.timer+'s' : '—';
+  const area = document.getElementById('game-area');
+  area.innerHTML = '';
+  area.className = 'game-area fade-in';
+  void area.offsetWidth;
+  switch(g.id) {
+    case 'memory':  showTutorial('memory', ()=>initMemory(area));  break;
+    case 'math':    showTutorial('math', ()=>initMath(area));    break;
+    case 'pattern': showTutorial('pattern', ()=>initPattern(area)); break;
+    case 'stroop':  showTutorial('stroop', ()=>initStroop(area));  break;
+    case 'warroom': showTutorial('warroom', ()=>initWarRoom(area)); break;
+    case 'inbox':   showTutorial('inbox', ()=>initInbox(area));   break;
+    case 'deal':    showTutorial('deal', ()=>initDeal(area));    break;
+    case 'dm':      showTutorial('dm', ()=>initDM(area));      break;
+  }
+}
+
+function startTimer(secs, onEnd) {
+  let t = secs;
+  const pill = document.getElementById('timer-pill');
+  pill.textContent = t+'s'; pill.className = 'timer-pill';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    t--;
+    pill.textContent = t+'s';
+    if(t<=5) pill.className = 'timer-pill hot';
+    if(t<=0) { clearInterval(timerInterval); onEnd(); }
+  }, 1000);
+}
+
+function nextGame(score, key) {
+  clearInterval(timerInterval);
+  scores[key] = Math.max(0, Math.min(100, Math.round(score)));
+  gameIndex++;
+  setTimeout(launchGame, 280);
+}
+
+// ══ MEMORY MATRIX (3 rounds) ══
+function initMemory(area) {
+  let round=0, total=0, SIZE=4, phase='show', sel=[], pat=[];
+  function render() {
+    area.innerHTML=`<div class="m-round"><span>Round ${round+1} of 3</span></div>
+      <div class="m-grid" id="mg" style="grid-template-columns:repeat(${SIZE},58px)"></div>
+      <div class="m-status" id="ms">Memorise the pattern...</div>`;
+    const g=document.getElementById('mg');
+    for(let i=0;i<SIZE*SIZE;i++){
+      const c=document.createElement('div');
+      c.className='m-cell'+(pat.includes(i)&&phase==='show'?' lit':'')+(phase==='recall'?'':' locked');
+      if(phase==='recall') c.onclick=()=>toggle(i,c);
+      g.appendChild(c);
+    }
+  }
+  function toggle(i,el){
+    if(sel.includes(i)){sel=sel.filter(x=>x!==i);el.classList.remove('sel');}
+    else{sel.push(i);el.classList.add('sel');}
+  }
+  function next(){
+    round++;
+    if(round>=3){nextGame(total/3*100,'memory');return;}
+    go();
+  }
+  function go(){
+    const cnt=round+4; pat=[]; sel=[]; SIZE=4;
+    while(pat.length<cnt){const r=Math.floor(Math.random()*16);if(!pat.includes(r))pat.push(r);}
+    phase='show'; render();
+    setTimeout(()=>{
+      phase='recall'; render();
+      document.getElementById('ms').textContent='Select the highlighted cells!';
+      const b=document.createElement('button');
+      b.className='btn-main';b.style='margin-top:14px;max-width:180px;';b.textContent='Submit';
+      b.onclick=check; area.appendChild(b);
+    },1600);
+  }
+  function check(){
+    const ok=pat.every(p=>sel.includes(p))&&sel.every(s=>pat.includes(s));
+    if(ok)total++;
+    document.querySelectorAll('.m-cell').forEach((c,i)=>{
+      c.onclick=null;
+      if(pat.includes(i))c.classList.add('ok');
+      else if(sel.includes(i))c.classList.add('no');
+    });
+    document.getElementById('ms').textContent=ok?'✓ Correct!':'✗ Not quite.';
+    setTimeout(next,1100);
+  }
+  go();
+}
+
+// ══ INVENTORY BLITZ (60s) ══
+function initMath(area) {
+  let correct=0, answered=0;
+  const ops=['+','-','×'];
+  function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+  function gen(){
+    const op=ops[Math.floor(Math.random()*ops.length)];
+    let a,b;
+    if(op==='+'){a=rnd(10,99);b=rnd(10,99);}
+    else if(op==='-'){a=rnd(30,99);b=rnd(10,a-1);}
+    else{a=rnd(2,12);b=rnd(2,12);}
+    return{a,b,op,ans:op==='+'?a+b:op==='-'?a-b:a*b};
+  }
+  let cur=gen();
+  function render(){
+    area.innerHTML=`
+      <div class="math-scoreboard">
+        <div class="math-sc"><div class="v" style="color:var(--success)">${correct}</div><div class="l">Correct</div></div>
+        <div class="math-sc"><div class="v" style="color:var(--muted)">${answered}</div><div class="l">Answered</div></div>
+      </div>
+      <div class="eq-box"><div class="eq">${cur.a} ${cur.op} ${cur.b} = ?</div></div>
+      <div class="math-row">
+        <input class="math-inp" id="mi" type="number" placeholder="?" autocomplete="off">
+        <button class="btn-go" onclick="doMath()">→</button>
+      </div>`;
+    const i=document.getElementById('mi');
+    i.focus();
+    i.onkeydown=e=>{if(e.key==='Enter')doMath();};
+  }
+  window.doMath=function(){
+    const i=document.getElementById('mi');if(!i)return;
+    const v=parseInt(i.value);if(isNaN(v))return;
+    answered++;if(v===cur.ans)correct++;
+    cur=gen();render();
+  };
+  render();
+  startTimer(75,()=>{
+    window.doMath=()=>{};
+    nextGame(answered===0?0:(correct/answered)*100,'math');
+  });
+}
+
+// ══ PATTERN RECOGNITION (3 questions) ══
+function initPattern(area) {
+  const all=[
+    {seq:[2,4,8,16,'?'],ans:32,opts:[24,28,32,36]},
+    {seq:[1,4,9,16,'?'],ans:25,opts:[20,25,30,36]},
+    {seq:[100,90,81,73,'?'],ans:66,opts:[66,68,70,72]},
+    {seq:[3,6,10,15,'?'],ans:21,opts:[18,20,21,24]},
+    {seq:[2,3,5,8,13,'?'],ans:21,opts:[18,20,21,24]},
+  ];
+  const pats=all.sort(()=>Math.random()-.5).slice(0,3);
+  let q=0,score=0;
+  function render(){
+    if(q>=3){nextGame(score/3*100,'pattern');return;}
+    const p=pats[q];
+    const shuffled=[...p.opts].sort(()=>Math.random()-.5);
+    area.innerHTML=`
+      <div class="pat-qn">Question ${q+1} of 3</div>
+      <div class="pat-seq">${p.seq.map(n=>`<div class="pat-num${n==='?'?' q':''}">${n}</div>`).join('')}</div>
+      <div class="pat-opts">${shuffled.map(o=>`<div class="pat-opt" onclick="pickPat(${o},${p.ans},this)">${o}</div>`).join('')}</div>`;
+  }
+  window.pickPat=function(picked,correct,el){
+    clearInterval(timerInterval);
+    document.querySelectorAll('.pat-opt').forEach(o=>o.onclick=null);
+    if(picked===correct){score++;el.classList.add('ok');}
+    else{el.classList.add('no');document.querySelectorAll('.pat-opt').forEach(o=>{if(parseInt(o.textContent)===correct)o.classList.add('ok');});}
+    q++;setTimeout(render,900);
+  };
+  render();
+  startTimer(25,()=>{document.querySelectorAll('.pat-opt').forEach(o=>o.onclick=null);q++;setTimeout(render,300);});
+}
+
+// ══ STROOP TEST (8 rounds) ══
+function initStroop(area) {
+  const colors=['Red','Blue','Green','Yellow','Teal'];
+  const hex={Red:'#ef4444',Blue:'#3b82f6',Green:'#22c55e',Yellow:'#eab308',Teal:'#14b8a6'};
+  let round=0,correct=0,total=8;
+  function render(){
+    if(round>=total){nextGame(correct/total*100,'stroop');return;}
+    const word=colors[Math.floor(Math.random()*colors.length)];
+    let ink=colors[Math.floor(Math.random()*colors.length)];
+    while(ink===word)ink=colors[Math.floor(Math.random()*colors.length)];
+    const shuffled=[...colors].sort(()=>Math.random()-.5);
+    area.innerHTML=`
+      <div class="stroop-stats">
+        <div class="s-stat"><div class="v" style="color:var(--success)">${correct}</div><div class="l">Correct</div></div>
+        <div class="s-stat"><div class="v" style="color:var(--muted)">${round}/${total}</div><div class="l">Progress</div></div>
+      </div>
+      <div class="s-prog"><div class="s-fill" style="width:${round/total*100}%"></div></div>
+      <div class="stroop-instr">Tap the INK COLOUR — ignore what the word says</div>
+      <div class="stroop-word" style="color:${hex[ink]}">${word}</div>
+      <div class="stroop-q">What colour is the ink?</div>
+      <div class="stroop-btns">${shuffled.map(c=>`<button class="s-btn" style="border-color:${hex[c]}25" onclick="pickStroop('${c}','${ink}',this)">${c}</button>`).join('')}</div>`;
+  }
+  window.pickStroop=function(picked,ink,el){
+    document.querySelectorAll('.s-btn').forEach(b=>b.onclick=null);
+    if(picked===ink){correct++;el.classList.add('ok');}
+    else{el.classList.add('no');document.querySelectorAll('.s-btn').forEach(b=>{if(b.textContent===ink)b.classList.add('ok');});}
+    round++;setTimeout(render,550);
+  };
+  render();
+  startTimer(60,()=>{nextGame(correct/total*100,'stroop');});
+}
+
+// ══ SALES WAR ROOM (25s) ══
+function initWarRoom(area) {
+  const scenarios=[
+    {months:['Jan','Feb','Mar','Apr'],vals:[420,385,310,210],
+     metrics:[{l:'Revenue (Apr)',v:'Rs 2.1M',c:'-32%',d:'dn'},{l:'Units Sold',v:'1,240',c:'-28%',d:'dn'},{l:'Avg Order',v:'Rs 1,693',c:'-5%',d:'dn'}],
+     q:'What is the most likely cause and correct action?',
+     opts:['Increase ad spend immediately','Check if sunscreen stock ran out — it\'s peak summer','Hire more customer reps','Reduce product prices by 20%'],correct:1},
+    {months:['Jan','Feb','Mar','Apr'],vals:[200,310,480,290],
+     metrics:[{l:'Revenue (Apr)',v:'Rs 2.9M',c:'-40%',d:'dn'},{l:'New Customers',v:'892',c:'-35%',d:'dn'},{l:'Return Rate',v:'18%',c:'+9%',d:'dn'}],
+     q:'Revenue spiked in March then crashed in April. What most likely happened?',
+     opts:['A flash sale in March brought one-time buyers who didn\'t return','Delivery partner changed in April','A competitor launched in April','March data is incorrect'],correct:0},
+  ];
+  const sc=scenarios[Math.floor(Math.random()*scenarios.length)];
+  const max=Math.max(...sc.vals);
+  const bc=['#6B21A8','#7E3BB5','#ff85c8','#ffb3dc'];
+  area.innerHTML=`
+    <div class="chart-wrap"><div class="bars">${sc.months.map((m,i)=>`<div class="bar-col"><div class="bar-el" style="height:${Math.round(sc.vals[i]/max*90)}px;background:${bc[i]}"></div><div class="bar-lbl">${m}</div></div>`).join('')}</div></div>
+    <div class="war-metrics">${sc.metrics.map(m=>`<div class="wm"><div class="wl">${m.l}</div><div class="wv">${m.v}</div><div class="wc ${m.d}">${m.c}</div></div>`).join('')}</div>
+    <div class="war-q">⚠️ ${sc.q}</div>
+    <div class="war-opts">${sc.opts.map((o,i)=>`<div class="war-opt" onclick="pickWar(${i},${sc.correct},this)">${o}</div>`).join('')}</div>`;
+  startTimer(25,()=>{document.querySelectorAll('.war-opt').forEach(o=>o.onclick=null);nextGame(0,'warroom');});
+  window.pickWar=function(picked,correct,el){
+    clearInterval(timerInterval);
+    document.querySelectorAll('.war-opt').forEach(o=>o.onclick=null);
+    if(picked===correct){el.classList.add('ok');nextGame(100,'warroom');}
+    else{el.classList.add('no');document.querySelectorAll('.war-opt')[correct].classList.add('ok');setTimeout(()=>nextGame(0,'warroom'),1400);}
+  };
+}
+
+// ══ INBOX MELTDOWN (45s) ══
+function initInbox(area) {
+  const items=[
+    {ico:'📸',from:'Instagram',subj:'Negative viral post about Highfy',prev:'A customer posted a reel with 40k views calling out late delivery...',urg:'critical',rank:1},
+    {ico:'🚚',from:'Logistics Team',subj:'Supplier delay — flash sale stock',prev:'Our sunscreen order won\'t arrive before the 3pm flash sale...',urg:'critical',rank:2},
+    {ico:'⚠️',from:'Tech Team',subj:'Pricing error on sale page',prev:'The flash sale is live with 0% discount instead of 40%...',urg:'high',rank:3},
+    {ico:'📩',from:'Influencer Agency',subj:'Partnership proposal — 500K creator',prev:'We have an exciting collab opportunity. Can we schedule a call?',urg:'medium',rank:4},
+    {ico:'📊',from:'Finance',subj:'Monthly P&L ready for review',prev:'April numbers are in. Please review at your earliest convenience.',urg:'low',rank:5},
+  ];
+  let order=[...items].sort(()=>Math.random()-.5);
+  let dragSrc=null;
+  function render(){
+    area.innerHTML=`
+      <div class="inbox-instr">Drag to rank: most urgent at top, least urgent at bottom</div>
+      <div class="inbox-list" id="ilist">${order.map((item,i)=>`
+        <div class="inbox-item" draggable="true" data-i="${i}">
+          <div class="inbox-rank">${i+1}</div>
+          <div class="inbox-ico">${item.ico}</div>
+          <div class="inbox-txt"><div class="from">${item.from}</div><div class="subj">${item.subj}</div><div class="prev">${item.prev}</div></div>
+          
+        </div>`).join('')}
+      </div>
+      <button class="btn-confirm" onclick="submitInbox()">Confirm Priority →</button>`;
+    setupDrag();
+  }
+  function setupDrag(){
+    document.querySelectorAll('.inbox-item').forEach(el=>{
+      el.ondragstart=()=>{dragSrc=el;el.classList.add('dragging');};
+      el.ondragend=()=>{el.classList.remove('dragging');document.querySelectorAll('.inbox-item').forEach(e=>e.classList.remove('over'));};
+      el.ondragover=e=>{e.preventDefault();el.classList.add('over');};
+      el.ondragleave=()=>el.classList.remove('over');
+      el.ondrop=e=>{
+        e.preventDefault();el.classList.remove('over');
+        if(dragSrc&&dragSrc!==el){
+          const si=parseInt(dragSrc.dataset.i),di=parseInt(el.dataset.i);
+          [order[si],order[di]]=[order[di],order[si]];
+          render();
+        }
+      };
+    });
+  }
+  window.submitInbox=function(){
+    clearInterval(timerInterval);
+    let correct=0;order.forEach((item,i)=>{if(item.rank===i+1)correct++;});
+    nextGame(correct/items.length*100,'inbox');
+  };
+  render();
+  startTimer(60,()=>window.submitInbox());
+}
+
+// ══ DEAL OR NO DEAL (2 deals, 20s each) ══
+function initDeal(area) {
+  const allDeals=[
+    {product:'Korean Vitamin C Serum 30ml',cost:1200,retail:2800,fee:280,disc:30},
+    {product:'Lattafa Perfume 100ml',cost:2200,retail:5500,fee:550,disc:25},
+    {product:'NYX Lipstick Set (5pc)',cost:1800,retail:3600,fee:360,disc:40},
+    {product:'COSRX Snail Mucin Toner',cost:900,retail:2100,fee:210,disc:20},
+  ];
+  const deals=allDeals.sort(()=>Math.random()-.5).slice(0,4);
+  let q=0,totalScore=0;
+  function render(){
+    if(q>=4){nextGame(totalScore/4*100,'deal');return;}
+    const d=deals[q];
+    const effRetail=d.retail*(1-(d.disc/100));
+    const margin=effRetail-d.cost-d.fee;
+    const marginPct=Math.round((margin/effRetail)*100);
+    const correct=marginPct>15?'accept':marginPct>0?'negotiate':'reject';
+    area.innerHTML=`
+      <div class="deal-ctr">Deal ${q+1} of 4</div>
+      <div class="deal-card">
+        <h3>Supplier Pitch — ${d.product}</h3>
+        <div class="deal-grid">
+          <div class="deal-m"><div class="dl">Cost Price</div><div class="dv">Rs ${d.cost.toLocaleString()}</div></div>
+          <div class="deal-m"><div class="dl">Retail Price</div><div class="dv">Rs ${d.retail.toLocaleString()}</div></div>
+          <div class="deal-m"><div class="dl">Platform Fee (~10%)</div><div class="dv">Rs ${d.fee.toLocaleString()}</div></div>
+          <div class="deal-m"><div class="dl">Proposed Discount</div><div class="dv">${d.disc}%</div><div class="ds">Effective: Rs ${Math.round(effRetail).toLocaleString()}</div></div>
+        </div>
+      </div>
+      <div class="deal-acts">
+        <div class="deal-btn accept" onclick="pickDeal('accept','${correct}',this)">✓ Accept</div>
+        <div class="deal-btn negotiate" onclick="pickDeal('negotiate','${correct}',this)">⟳ Negotiate</div>
+        <div class="deal-btn reject" onclick="pickDeal('reject','${correct}',this)">✗ Reject</div>
+      </div>
+      <div class="deal-res" id="deal-res"></div>`;
+    startTimer(20,()=>{document.querySelectorAll('.deal-btn').forEach(b=>b.onclick=null);q++;setTimeout(render,300);});
+  }
+  window.pickDeal=function(picked,correct,el){
+    clearInterval(timerInterval);
+    document.querySelectorAll('.deal-btn').forEach(b=>b.onclick=null);
+    const res=document.getElementById('deal-res');
+    if(picked===correct){
+      totalScore+=100;el.classList.add('ok');
+      res.className='deal-res profit';res.style.display='block';res.textContent='✓ Correct call!';
+    } else {
+      el.classList.add('no');
+      document.querySelectorAll('.deal-btn').forEach(b=>{if(b.classList.contains(correct))b.classList.add('ok');});
+      res.className='deal-res loss';res.style.display='block';res.textContent=`The right move was to ${correct}.`;
+    }
+    q++;setTimeout(render,1400);
+  };
+  render();
+}
+
+// ══ DM DASH (2 exchanges) ══
+function initDM(area) {
+  let brand=75,sat=60;
+  const thread=[{from:'customer',text:"I ordered 3 days ago and STILL no update on my order. This is ridiculous. I'm posting about this if I don't hear back NOW."}];
+  const steps=[
+    {options:[
+      {text:"Hi! We're sorry for the delay. Let me check your order right now.",bd:5,sd:15,sc:25},
+      {text:"Our delivery partner has been experiencing delays. We apologise.",bd:-5,sd:0,sc:8},
+      {text:"Orders take 5-7 business days. Please wait.",bd:-15,sd:-20,sc:0},
+    ]},
+    {customerMsg:"I've been waiting 5 days! What are you going to do about it?",
+     options:[
+      {text:"I've escalated this. As an apology, here's 15% off your next order: HIGHFY15 💛",bd:15,sd:25,sc:25},
+      {text:"We understand your frustration. The order should arrive soon.",bd:0,sd:5,sc:8},
+      {text:"Please DM us your order number.",bd:-10,sd:-10,sc:0},
+    ]},
+    {customerMsg:"Fine. But I'm telling my followers about this unless Highfy makes it right.",
+     options:[
+      {text:"We completely understand. Your order is now our top priority — we'll update you within 2 hours. Thank you for giving us the chance to fix this 💛",bd:20,sd:20,sc:25},
+      {text:"We're sorry to hear that. We hope you give us another chance.",bd:0,sd:5,sc:8},
+      {text:"That is your right as a customer.",bd:-20,sd:-25,sc:0},
+    ]},
+  ];
+  let step=0,totalScore=0;
+  function render(){
+    if(step>=steps.length){nextGame(Math.min(100,(totalScore/75)*100),'dm');return;}
+    const s=steps[step];
+    if(s.customerMsg)thread.push({from:'customer',text:s.customerMsg});
+    area.innerHTML=`
+      <div class="dm-meters">
+        <div class="dm-m"><div class="dl"><span>Brand Reputation</span><span>${brand}%</span></div><div class="dm-bar"><div class="dm-fill" style="width:${brand}%;background:var(--purple)"></div></div></div>
+        <div class="dm-m"><div class="dl"><span>Customer Satisfaction</span><span>${sat}%</span></div><div class="dm-bar"><div class="dm-fill" style="width:${sat}%;background:var(--success)"></div></div></div>
+      </div>
+      <div class="dm-thread" id="dmt">${thread.map(m=>`<div class="dm-bub ${m.from==='customer'?'theirs':'ours'}"><div class="dm-av">${m.from==='customer'?'👤':'💅'}</div><div class="dm-txt">${m.text}</div></div>`).join('')}</div>
+      <div class="dm-opts">${s.options.map((o,i)=>`<div class="dm-opt" onclick="pickDM(${i},${step})">${o.text}</div>`).join('')}</div>`;
+    const t=document.getElementById('dmt');if(t)t.scrollTop=t.scrollHeight;
+  }
+  window.pickDM=function(picked,si){
+    clearInterval(timerInterval);
+    const o=steps[si].options[picked];
+    totalScore+=o.sc;brand=Math.min(100,Math.max(0,brand+o.bd));sat=Math.min(100,Math.max(0,sat+o.sd));
+    thread.push({from:'ours',text:o.text});step++;setTimeout(render,300);
+  };
+  render();
+  startTimer(90,()=>{nextGame(Math.min(100,(totalScore/75)*100),'dm');});
+}
+
+// ══ FINISH & SAVE ══
+async function finishAssessment() {
+  const dim = {
+    cognitive:   Math.round((scores.memory+scores.math+scores.pattern+scores.stroop)/4),
+    numeracy:    Math.round((scores.math+scores.warroom+scores.deal)/3),
+    judgment:    Math.round((scores.inbox+scores.deal+scores.dm)/3),
+    situational: Math.round((scores.warroom+scores.inbox+scores.dm)/3),
+  };
+  const total = Object.values(scores).reduce((a,b)=>a+b,0);
+  const tags = [];
+  if(dim.cognitive>=70) tags.push('Sharp Thinker');
+  if(dim.numeracy>=70)  tags.push('Commercially Literate');
+  if(dim.judgment>=70)  tags.push('Sound Judgment');
+  if(dim.situational>=70) tags.push('Situationally Aware');
+  const profileTitle = total>=600?'Exceptional Performer':total>=400?'Strong Candidate':'Developing Candidate';
+
+  let resumeUrl = null;
+
+  const record = {
+    name: candidate.name,
+    erp: candidate.erp,
+    gpa: candidate.gpa,
+    email: candidate.email,
+    phone: candidate.phone,
+    program: candidate.program,
+    resume_data: null,
+    score_memory: scores.memory,
+    score_math: scores.math,
+    score_pattern: scores.pattern,
+    score_stroop: scores.stroop,
+    score_warroom: scores.warroom,
+    score_inbox: scores.inbox,
+    score_deal: scores.deal,
+    score_dm: scores.dm,
+    dim_cognitive: dim.cognitive,
+    dim_numeracy: dim.numeracy,
+    dim_judgment: dim.judgment,
+    dim_situational: dim.situational,
+    total_score: total,
+    profile: profileTitle,
+    tags: tags.join(', '),
+    submitted_at: new Date().toISOString(),
+  };
+
+  try {
+    await db.from(TABLE).update(record).eq('erp', candidate.erp).eq('profile', 'In Progress');
+  } catch(e) {
+    console.error('Save error:', e);
+  }
+
+  showScreen('screen-results');
+  document.getElementById('res-name').textContent = candidate.name;
+  document.getElementById('res-title').textContent = profileTitle;
+  document.getElementById('res-program').textContent = candidate.program;
+  document.getElementById('res-total').textContent = total;
+  document.getElementById('res-tags').innerHTML = tags.length
+    ? tags.map(t=>`<div class="profile-tag">${t}</div>`).join('')
+    : '<div class="profile-tag">Keep developing</div>';
+  document.getElementById('res-rows').innerHTML = [
+    {n:'Cognitive Abilities',v:dim.cognitive},
+    {n:'Numerical & Business Literacy',v:dim.numeracy},
+    {n:'Judgment & Decision Making',v:dim.judgment},
+    {n:'Situational Awareness',v:dim.situational},
+  ].map(r=>`<div class="s-row"><div class="sn">${r.n}</div><div class="sbw"><div class="sbf" style="width:${r.v}%"></div></div><div class="sp">${r.v}%</div></div>`).join('');
+}
+
+// ══ ADMIN ══
+function checkAdmin() {
+  const pw = document.getElementById('admin-pw').value;
+  const err = document.getElementById('err-admin');
+  if(pw === ADMIN_PW) {
+    document.getElementById('admin-login-view').style.display = 'none';
+    document.getElementById('admin-dash-view').style.display = 'block';
+    loadAdminDash();
+  } else {
+    err.textContent = 'Incorrect password.'; err.style.display='block';
+  }
+}
+
+async function loadAdminDash() {
+  document.getElementById('admin-loading').style.display='block';
+  document.getElementById('admin-empty').style.display='none';
+  document.getElementById('admin-tbody').innerHTML='';
+  try {
+    const { data, error } = await db.from(TABLE).select('*').order('submitted_at', {ascending:false});
+    if(error) throw error;
+    document.getElementById('admin-loading').style.display='none';
+    if(!data||!data.length){document.getElementById('admin-empty').style.display='block';return;}
+    const avg = Math.round(data.reduce((a,r)=>a+r.total_score,0)/data.length);
+    const mt = data.filter(r=>r.program==='MT Program').length;
+    const intern = data.filter(r=>r.program==='Summer Internship').length;
+    document.getElementById('admin-stats').innerHTML=`
+      <div class="stat-box"><div class="sv">${data.length}</div><div class="sl">Total Candidates</div></div>
+      <div class="stat-box"><div class="sv">${mt}</div><div class="sl">MT Program</div></div>
+      <div class="stat-box"><div class="sv">${intern}</div><div class="sl">Summer Internship</div></div>
+      <div class="stat-box"><div class="sv">${avg}</div><div class="sl">Avg Score / 800</div></div>`;
+    document.getElementById('admin-tbody').innerHTML = data.map((r,i)=>{
+      const cls = r.total_score>=600?'score-hi':r.total_score>=400?'score-mid':'score-lo';
+      return `<tr>
+        <td>${i+1}</td>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.erp}</td>
+        <td>${r.gpa || '—'}</td>
+        <td>${r.email}</td>
+        <td>${r.phone}</td>
+        <td><span class="badge ${r.program==='MT Program'?'badge-mt':'badge-intern'}">${r.program}</span></td>
+        <td><span class="${cls}">${r.total_score}/800</span></td>
+        <td>${r.dim_cognitive||0}%</td>
+        <td>${r.dim_numeracy||0}%</td>
+        <td>${r.dim_judgment||0}%</td>
+        <td>${r.dim_situational||0}%</td>
+        <td style="color:var(--muted);font-size:10px">${r.submitted_at?new Date(r.submitted_at).toLocaleString():''}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    console.error(e);
+    document.getElementById('admin-loading').textContent='Error loading results. Check console.';
+  }
+}
+
+async function exportExcel() {
+  try {
+    const { data, error } = await db.from(TABLE).select('*').order('submitted_at',{ascending:false});
+    if(error) throw error;
+    if(!data||!data.length){alert('No results to export yet.');return;}
+    const rows = data.map((r,i)=>{
+      return {
+        'No': i+1,
+        'Name': r.name || '',
+        'ERP': r.erp || '',
+        'Email': r.email || '',
+        'Phone': r.phone || '',
+        'Program': r.program || '',
+        'Total Score': r.total_score || 0,
+        'Out of': 800,
+        'Cognitive %': r.dim_cognitive || 0,
+        'Numeracy %': r.dim_numeracy || 0,
+        'Judgment %': r.dim_judgment || 0,
+        'Situational %': r.dim_situational || 0,
+        'Memory': r.score_memory || 0,
+        'Math': r.score_math || 0,
+        'Pattern': r.score_pattern || 0,
+        'Stroop': r.score_stroop || 0,
+        'War Room': r.score_warroom || 0,
+        'Inbox': r.score_inbox || 0,
+        'Deal': r.score_deal || 0,
+        'DM Dash': r.score_dm || 0,
+        'Profile': r.profile || '',
+        'Tags': r.tags || '',
+        'GPA': r.gpa || '',
+        'Date': r.submitted_at ? new Date(r.submitted_at).toLocaleString() : '',
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(()=>({wch:20}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,'Candidates',ws);
+    XLSX.writeFile(wb,'Highfy_Results_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  } catch(e){ console.error('Export error:',e); alert('Export failed: '+e.message); }
+}
+</script>
+</body>
+</html>
